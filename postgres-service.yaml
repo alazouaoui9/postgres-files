@@ -1,0 +1,62 @@
+# Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mapr-k8-postgres
+spec:
+  type: NodePort
+  selector:
+    app: mapr-k8-postgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+    nodePort: 30003
+
+
+# Pod
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mapr-k8-postgres
+  labels:
+    app: mapr-k8-postgres
+spec:
+  containers:
+    - name: mapr-k8-postgres
+      #imagePullPolicy: Always
+      image: mkieboom/mapr-k8-postgres
+#      resources:
+#        requests:
+#          memory: "2Gi"
+#          cpu: "500m"
+      command:
+      - /bin/bash
+      - -c
+      - "/launch.sh"
+      env:
+        - name: PGDATA_LOCATION
+          value: "/postgres"
+        - name: PG_DB
+          value: "mapr"
+        - name: PG_GROUP
+          value: "mapr"
+        - name: PG_USER
+          value: "mapr"
+        - name: PG_PWD
+          value: "mapr"
+        - name: PG_GID
+          value: "5000"
+        - name: PG_UID
+          value: "5000"
+      ports:
+        - containerPort: 5432
+      volumeMounts:
+        - name: maprfs-pvc
+          mountPath: "/postgres"
+  volumes:
+    - name: maprfs-pvc
+      persistentVolumeClaim:
+         claimName: nfs-1
